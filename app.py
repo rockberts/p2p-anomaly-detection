@@ -58,13 +58,6 @@ Step 4: Then, apply the retrieved business rules to match the invoice line items
 Provide the list of anomalies detected in the Invoice, and the business rules that were violated.
 """
 
-# user_prompt = """
-# From the input image, extract the Contract ID and Supplier ID in the Invoice. Extract each line item from the Invoice in the form of a table.
-# Then use the file search tool to retrieve the business rules applicable to detection of anomalies in the Procure to Pay process.
-# Then, apply the business rules to match the invoice line items with the contract details fetched from the system, using the business rules retrieved.
-# Then provide the list of anomalies detected in the Invoice, and the business rules that were violated.
-# """
-
 user_prompt = """
 here are the Purchase Invoice image(s) as input. Detect anomalies in the procure to pay process and give me a detailed report
 """
@@ -97,7 +90,7 @@ response = client.responses.create(
     parallel_tool_calls=False,
 )
 tool_call = response.output[0]
-print(f"tool call: {tool_call}")
+# print(f"tool call: {tool_call}")
 
 # We know this needs a function call, that needs to be executed from here in the application code.
 # Lets get hold of the function name and arguments from the Responses API response.
@@ -116,7 +109,7 @@ if response.output[0].type == "function_call":
 
 # append the response message to the input messages, and proceed with the next call to the Responses API.
 input_messages.append(tool_call)  # append model's function call message
-input_messages.append({                               # append result message
+input_messages.append({           # append result message
     "type": "function_call_output",
     "call_id": tool_call.call_id,
     "output": str(function_response)
@@ -124,7 +117,7 @@ input_messages.append({                               # append result message
 
 # This is the final call to the Responses API with the input messages and tools
 response_2 = client.responses.create(
-    model="gpt-4o",
+    model=config.model,
     instructions=instructions,
     input=input_messages,
     tools=tools_list,
