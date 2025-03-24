@@ -138,4 +138,6 @@ The system checks for various anomalies including:
 - OpenAI vector store for business rules
 
 
+## Demo Video
 
+See a demo of this application [here](https://youtu.be/qYVijzwkncY)
