@@ -1,10 +1,24 @@
 import config
 from openai import OpenAI
+from openai import AzureOpenAI
 from tools import retrieve_contract
 import base64
 import json
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from azure.core.credentials import AzureKeyCredential
 
-client = OpenAI(api_key=config.api_key)
+token_provider = get_bearer_token_provider(
+    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+)
+
+
+### client = OpenAI(api_key=config.api_key)
+client = AzureOpenAI(
+    azure_endpoint="https://aoai-gpt4-001.openai.azure.com/",
+    azure_ad_token_provider=token_provider,
+    api_version="2025-03-01-preview"
+)
+
 
 available_functions = {
     "retrieve_contract": retrieve_contract,
@@ -13,42 +27,46 @@ available_functions = {
 # read the Purchase Invoice image(s) to be sent as input to the model
 image_paths = ["data_files/Invoice-002.png"]
 
+
 def encode_image_to_base64(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
+
 
 # Encode images
 base64_images = [encode_image_to_base64(image_path) for image_path in image_paths]
 
 # These are the tools that will be used by the Responses API.
-tools_list =  [
-        {
-            "type": "file_search",
-            "vector_store_ids": [config.vector_store_id],
-            "max_num_results": 20,
-        },
-        {
-            "type": "function",
-            "name": "retrieve_contract",
-            "description": "fetch contract details for the given contract_id and supplier_id",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "contract_id": {
-                        "type": "string",
-                        "description": "The contract id registered for the Supplier in the System",
-                    },
-                    "supplier_id": {
-                        "type": "string",
-                        "description": "The Supplier ID registered in the System",
-                    },
+tools_list = [
+    {
+        "type": "file_search",
+        "vector_store_ids": [config.vector_store_id],
+        "max_num_results": 20,
+    },
+    {
+        "type": "function",
+        "name": "retrieve_contract",
+        "description": "fetch contract details for the given contract_id and supplier_id",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "contract_id": {
+                    "type": "string",
+                    "description": "The contract id registered for the Supplier in the System",
                 },
-                "required": ["contract_id", "supplier_id"],
+                "supplier_id": {
+                    "type": "string",
+                    "description": "The Supplier ID registered in the System",
+                },
             },
+            "required": ["contract_id", "supplier_id"],
         },
-    ]
+    },
+]
 
-instructions="""
+
+
+instructions = """
 This is a Procure to Pay process. You will be provided with the Purchase Invoice image as input.
 Note that Step 3 can be performed only after Step 1 and Step 2 are completed.
 Step 1: As a first step, you will extract the Contract ID and Supplier ID from the Invoice and also all the line items from the Invoice in the form of a table.
@@ -61,6 +79,7 @@ Provide the list of anomalies detected in the Invoice, and the business rules th
 user_prompt = """
 here are the Purchase Invoice image(s) as input. Detect anomalies in the procure to pay process and give me a detailed report
 """
+
 
 input_messages = [
     {
@@ -90,6 +109,7 @@ response = client.responses.create(
     parallel_tool_calls=False,
 )
 tool_call = response.output[0]
+print("Response from the model:", response)
 # print(f"tool call: {tool_call}")
 
 # We know this needs a function call, that needs to be executed from here in the application code.
@@ -109,11 +129,13 @@ if response.output[0].type == "function_call":
 
 # append the response message to the input messages, and proceed with the next call to the Responses API.
 input_messages.append(tool_call)  # append model's function call message
-input_messages.append({           # append result message
-    "type": "function_call_output",
-    "call_id": tool_call.call_id,
-    "output": str(function_response)
-})
+input_messages.append(
+    {  # append result message
+        "type": "function_call_output",
+        "call_id": tool_call.call_id,
+        "output": str(function_response),
+    }
+)
 
 # This is the final call to the Responses API with the input messages and tools
 response_2 = client.responses.create(
