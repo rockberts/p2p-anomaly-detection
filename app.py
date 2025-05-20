@@ -69,8 +69,8 @@ tools_list = [
 instructions = """
 This is a Procure to Pay process. You will be provided with the Purchase Invoice image as input.
 Note that Step 3 can be performed only after Step 1 and Step 2 are completed.
-Step 1: As a first step, you will extract the Contract ID and Supplier ID from the Invoice and also all the line items from the Invoice in the form of a table.
-Step 2: You will then use the function tool to call the Logic app with the Contract ID and Supplier ID to get the contract details.
+Step 1: As a first step, you will extract the Contract ID and Supplier ID from the Purchase Invoice image along with all the line items from the Invoice in the form of a table.
+Step 2: You will then use the function tool by passing the Contract ID and Supplier ID to retrieve the contract details.
 Step 3: You will then use the file search tool to retrieve the business rules applicable to detection of anomalies in the Procure to Pay process.
 Step 4: Then, apply the retrieved business rules to match the invoice line items with the contract details fetched from the system, and detect anomalies if any.
 Provide the list of anomalies detected in the Invoice, and the business rules that were violated.
