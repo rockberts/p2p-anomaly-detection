@@ -1,5 +1,4 @@
 import config
-from openai import OpenAI
 from openai import AzureOpenAI
 from tools import retrieve_contract
 import base64
@@ -7,18 +6,17 @@ import json
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from azure.core.credentials import AzureKeyCredential
 
-token_provider = get_bearer_token_provider(
-    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
-)
+#token_provider = get_bearer_token_provider(
+#    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+#)
 
 
-### client = OpenAI(api_key=config.api_key)
+
 client = AzureOpenAI(
-    azure_endpoint="https://aoai-gpt4-001.openai.azure.com/",
-    azure_ad_token_provider=token_provider,
-    api_version="2025-03-01-preview"
+    api_key=config.azure_api_key,
+    api_version=config.azure_api_version,
+    azure_endpoint=config.azure_endpoint,
 )
-
 
 available_functions = {
     "retrieve_contract": retrieve_contract,
@@ -36,11 +34,21 @@ def encode_image_to_base64(image_path):
 # Encode images
 base64_images = [encode_image_to_base64(image_path) for image_path in image_paths]
 
+
 # These are the tools that will be used by the Responses API.
 tools_list = [
     {
         "type": "file_search",
-        "vector_store_ids": [config.vector_store_id],
+        "vector_store_ids": [config.azure_vector_store_id],
+        "max_num_results": 20,
+    },
+  ]
+
+
+tools_listv2 = [
+    {
+        "type": "file_search",
+        "vector_store_ids": [config.azure_vector_store_id],
         "max_num_results": 20,
     },
     {
@@ -63,7 +71,6 @@ tools_list = [
         },
     },
 ]
-
 
 
 instructions = """
@@ -101,19 +108,25 @@ input_messages = [
 
 # The following code is to call the Responses API with the input messages and tools
 response = client.responses.create(
-    model=config.model,
+    model=config.azure_deployment_name,
     instructions=instructions,
     input=input_messages,
-    tools=tools_list,
+    tools=tools_listv2,
     tool_choice="auto",
     parallel_tool_calls=False,
 )
 tool_call = response.output[0]
-print("Response from the model:", response)
-# print(f"tool call: {tool_call}")
+#print("Response from the model:", response)
+print(f"tool call: {tool_call}")
+print(f"function name: {response.output[0].name}")
+print(f"function arguments: {response.output[0].arguments}")
+print(f"function type: {response.output[0].type}")
 
 # We know this needs a function call, that needs to be executed from here in the application code.
 # Lets get hold of the function name and arguments from the Responses API response.
+
+
+
 function_response = None
 function_to_call = None
 function_name = None
@@ -127,6 +140,7 @@ if response.output[0].type == "function_call":
     # Lets call the Logic app with the function arguments to get the contract details.
     function_response = function_to_call(**function_args)
 
+
 # append the response message to the input messages, and proceed with the next call to the Responses API.
 input_messages.append(tool_call)  # append model's function call message
 input_messages.append(
@@ -137,13 +151,19 @@ input_messages.append(
     }
 )
 
+#print(input_messages)
+
+
 # This is the final call to the Responses API with the input messages and tools
 response_2 = client.responses.create(
-    model=config.model,
+    model=config.azure_deployment_name,
     instructions=instructions,
     input=input_messages,
-    tools=tools_list,
+    tools=tools_listv2,
+    tool_choice="auto",
 )
 print(response_2.output_text)
-# print("Response from the model:")
-# print(json.dumps(response_2, default=lambda o: o.__dict__, indent=4))
+#print("Response from the model:")
+#print(json.dumps(response_2, default=lambda o: o.__dict__, indent=4))
+
+
