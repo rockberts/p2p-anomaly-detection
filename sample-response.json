@@ -1,0 +1,87 @@
+{
+    "id": "resp_67e115e4566081928dc8673d6a95f1e50423eca9d35c39ba",
+    "created_at": 1742804452.0,
+    "error": null,
+    "incomplete_details": null,
+    "instructions": null,
+    "metadata": {},
+    "model": "gpt-4o-2024-08-06",
+    "object": "response",
+    "output": [
+        {
+            "arguments": "{\"contract_id\":\"CON000002\",\"supplier_id\":\"SUP0008\"}",
+            "call_id": "call_I1gpNXUo8TQLBXfNPH3YKJrJ",
+            "name": "retrieve_contract",
+            "type": "function_call",
+            "id": "fc_67e115e66a48819293b61a8b356e5c4d0423eca9d35c39ba",
+            "status": "completed"
+        }
+    ],
+    "parallel_tool_calls": false,
+    "temperature": 1.0,
+    "tool_choice": "auto",
+    "tools": [
+        {
+            "type": "file_search",
+            "vector_store_ids": [
+                "vs_67e0fc397fb48191817dd729792110e8"
+            ],
+            "filters": null,
+            "max_num_results": 20,
+            "ranking_options": {
+                "ranker": "auto",
+                "score_threshold": 0.0
+            }
+        },
+        {
+            "name": "retrieve_contract",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "contract_id": {
+                        "type": "string",
+                        "description": "The contract id registered for the Supplier in the System"
+                    },
+                    "supplier_id": {
+                        "type": "string",
+                        "description": "The Supplier ID registered in the System"
+                    }
+                },
+                "required": [
+                    "contract_id",
+                    "supplier_id"
+                ]
+            },
+            "strict": true,
+            "type": "function",
+            "description": "fetch contract details for the given contract_id and supplier_id"
+        }
+    ],
+    "top_p": 1.0,
+    "max_output_tokens": null,
+    "previous_response_id": null,
+    "reasoning": {
+        "effort": null,
+        "generate_summary": null
+    },
+    "status": "completed",
+    "text": {
+        "format": {
+            "type": "text"
+        }
+    },
+    "truncation": "disabled",
+    "usage": {
+        "input_tokens": 1952,
+        "input_tokens_details": {
+            "cached_tokens": 1024
+        },
+        "output_tokens": 25,
+        "output_tokens_details": {
+            "reasoning_tokens": 0
+        },
+        "total_tokens": 1977
+    },
+    "user": null,
+    "_request_id": "req_389a2627c66fd0ab4fe5a62b65af47fb"
+}
